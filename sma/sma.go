@@ -84,7 +84,7 @@ func (api *SMAApi) Login(profile, password string) (string, error) {
 
 func (api *SMAApi) Logout(ctx context.Context) (bool, error) {
 	// Define the URL for the Logout endpoint
-	sid := ctx.Value("sid")
+	sid := ctx.Value(types.ApiContextKey("sid"))
 	url := fmt.Sprintf("%s/dyn/logout.json?sid=%s", api.Base, sid)
 
 	// Define an empty payload for the request
@@ -134,7 +134,7 @@ func (api *SMAApi) Logout(ctx context.Context) (bool, error) {
 
 func (api *SMAApi) GetFS(ctx context.Context, path string) ([]types.FSEntry, error) {
 	// Define the URL for the GetFS endpoint
-	sid := ctx.Value("sid")
+	sid := ctx.Value(types.ApiContextKey("sid"))
 	url := fmt.Sprintf("%s/dyn/getFS.json?sid=%s", api.Base, sid)
 
 	// Define the request payload
@@ -211,7 +211,7 @@ func (api *SMAApi) GetFS(ctx context.Context, path string) ([]types.FSEntry, err
 }
 
 func (api *SMAApi) Download(ctx context.Context, filename string) ([]byte, error) {
-	sid := ctx.Value("sid")
+	sid := ctx.Value(types.ApiContextKey("sid"))
 	url := fmt.Sprintf("%s/fs/%s?sid=%s", api.Base, filename, sid)
 
 	req, err := http.NewRequest("GET", url, nil)

@@ -8,11 +8,13 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/hanwen/go-fuse/v2/fs"
 
 	"github.com/dominikbayerl/go-smafs/fusefs"
 	"github.com/dominikbayerl/go-smafs/sma"
+	"github.com/dominikbayerl/go-smafs/types"
 )
 
 type SMAFs struct {
@@ -21,9 +23,12 @@ type SMAFs struct {
 
 func main() {
 	debug := flag.Bool("debug", false, "print debugging messages.")
+	insecure := flag.Bool("insecure", false, "skip TLS certificate verification")
 	flag.Parse()
-	if len(flag.Args()) < 2 {
-		log.Fatal("Usage: smafs <url> <mountpoint>")
+
+	if flag.NArg() < 2 {
+		flag.Usage()
+		os.Exit(1)
 	}
 
 	u, err := url.Parse(flag.Arg(0))
@@ -31,19 +36,36 @@ func main() {
 		log.Fatalf("error invalid url: %v\n", err)
 	}
 
-	if *debug {
+	if *insecure {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
-	api := sma.SMAApi{Base: fmt.Sprintf("%s://%s", u.Scheme, u.Host), Client: *http.DefaultClient}
-	profile := u.User.Username()
-	password, _ := u.User.Password()
+	// Read profile and password from environment variables
+	usernameFile := os.Getenv("SMAFS_USER")
+	if usernameFile == "" {
+		log.Fatal("SMAFS_USER environment variable not set")
+	}
+	username, err := os.ReadFile(usernameFile)
+	if err != nil {
+		log.Fatalf("error reading username from file: %v\n", err)
+	}
 
-	sid, err := api.Login(profile, password)
+	passwordFile := os.Getenv("SMAFS_PASS")
+	if passwordFile == "" {
+		log.Fatal("SMAFS_PASS environment variable not set")
+	}
+
+	password, err := os.ReadFile(passwordFile)
+	if err != nil {
+		log.Fatalf("error reading password from file: %v\n", err)
+	}
+
+	api := sma.SMAApi{Base: fmt.Sprintf("%s://%s", u.Scheme, u.Host), Client: *http.DefaultClient}
+	sid, err := api.Login(string(username), string(password))
 	if err != nil || sid == "" {
 		log.Fatalf("error requesting session: %v\n", err)
 	}
-	ctx := context.WithValue(context.Background(), "sid", sid)
+	ctx := context.WithValue(context.Background(), types.ApiContextKey("sid"), sid)
 	defer api.Logout(ctx)
 
 	root := fusefs.NewFuseFS(ctx, &api)

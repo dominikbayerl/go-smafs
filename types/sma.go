@@ -10,3 +10,5 @@ type FSEntry struct {
 	Timestamp     uint64 `json:"tm"`
 	Size          uint64 `json:"s,omitempty"`
 }
+
+type ApiContextKey string

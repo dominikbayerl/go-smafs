@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/dominikbayerl/go-smafs/types"
 )
 
 func TestLogin(t *testing.T) {
@@ -51,7 +53,7 @@ func TestLogout(t *testing.T) {
 	ctx := context.Background()
 
 	// Call the Logout method
-	logoutResult, err := client.Logout(context.WithValue(ctx, "sid", "test-sid"))
+	logoutResult, err := client.Logout(context.WithValue(ctx, types.ApiContextKey("sid"), "test-sid"))
 	if err != nil {
 		t.Errorf("Logout returned an error: %v", err)
 	}
@@ -92,7 +94,7 @@ func TestGetFS(t *testing.T) {
 	server, api := setupTest(responseJSON)
 	defer server.Close()
 
-	ctx := context.WithValue(context.Background(), "sid", "test-sid")
+	ctx := context.WithValue(context.Background(), types.ApiContextKey("sid"), "test-sid")
 	path := "/DIAGNOSE/"
 
 	entries, err := api.GetFS(ctx, path)
@@ -136,7 +138,7 @@ func TestGetFS_InvalidResponse(t *testing.T) {
 	server, api := setupTest(responseJSON)
 	defer server.Close()
 
-	ctx := context.WithValue(context.Background(), "sid", "test-sid")
+	ctx := context.WithValue(context.Background(), types.ApiContextKey("sid"), "test-sid")
 	path := "/INVALID/"
 
 	_, err := api.GetFS(ctx, path)
@@ -162,7 +164,7 @@ func TestGetFS_MultipleDevices(t *testing.T) {
 	}`
 	server, api := setupTest(responseJSON)
 
-	ctx := context.WithValue(context.Background(), "sid", "test-sid")
+	ctx := context.WithValue(context.Background(), types.ApiContextKey("sid"), "test-sid")
 	path := "/DIAGNOSE/"
 
 	_, err := api.GetFS(ctx, path)
@@ -188,7 +190,7 @@ func TestGetFS_MultiplePaths(t *testing.T) {
 	}`
 	server, api := setupTest(responseJSON)
 
-	ctx := context.WithValue(context.Background(), "sid", "test-sid")
+	ctx := context.WithValue(context.Background(), types.ApiContextKey("sid"), "test-sid")
 	path := "/DIAGNOSE/"
 
 	_, err := api.GetFS(ctx, path)
